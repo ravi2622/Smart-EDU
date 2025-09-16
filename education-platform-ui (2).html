@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Education Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.9);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .progress-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(var(--success-color) var(--progress, 0%), #e5e7eb 0%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .progress-circle::before {
+            content: '';
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+        }
+
+        .progress-text {
+            position: relative;
+            z-index: 1;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--dark-color);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: calc(100vh - 76px);
+        }
+
+        .nav-link {
+            color: var(--dark-color);
+            padding: 15px 20px;
+            margin: 5px 10px;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .quiz-card {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .notes-card {
+            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
+            color: white;
+        }
+
+        .forum-card {
+            background: linear-gradient(135deg, #ffd3a5, #fd9853);
+            color: white;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 15px;
+            padding: 15px 20px;
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+        }
+
+        .quiz-option {
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .timer {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: var(--danger-color);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="fas fa-graduation-cap me-2"></i>
+            AI Education Platform
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/notes"><i class="fas fa-book me-2"></i>Notes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/quiz"><i class="fas fa-question-circle me-2"></i>Quizzes</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/forum"><i class="fas fa-comments me-2"></i>Forum</a>
+                </li>
+            </ul>
+            
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-2"></i>Profile
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="/dashboard/profile">My Profile</a></li>
+                        <li><a class="dropdown-item" href="/ai/study-plan">Study Plan</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Flash Messages -->
+<div class="container-fluid mt-3">
+    <div class="alert alert-success alert-dismissible fade show" role="alert" style="display: none;" id="successAlert">
+        <i class="fas fa-check-circle me-2"></i>
+        <span id="successMessage"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" style="display: none;" id="errorAlert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        <span id="errorMessage"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<!-- Dashboard Layout -->
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-2 col-md-3 sidebar d-none d-md-block">
+            <div class="p-3">
+                <h6 class="text-muted mb-3">NAVIGATION</h6>
+                <nav class="nav flex-column">
+                    <a class="nav-link active" href="/dashboard">
+                        <i class="fas fa-home me-2"></i>Dashboard
+                    </a>
+                    <a class="nav-link" href="/notes">
+                        <i class="fas fa-book me-2"></i>Study Notes
+                    </a>
+                    <a class="nav-link" href="/quiz">
+                        <i class="fas fa-question-circle me-2"></i>Quizzes
+                    </a>
+                    <a class="nav-link" href="/ai/study-plan">
+                        <i class="fas fa-robot me-2"></i>AI Study Plan
+                    </a>
+                    <a class="nav-link" href="/forum">
+                        <i class="fas fa-comments me-2"></i>Forum
+                    </a>
+                </nav>
+                
+                <h6 class="text-muted mb-3 mt-4">QUICK ACTIONS</h6>
+                <nav class="nav flex-column">
+                    <a class="nav-link" href="/notes/upload">
+                        <i class="fas fa-upload me-2"></i>Upload Notes
+                    </a>
+                    <a class="nav-link" href="/quiz/create">
+                        <i class="fas fa-plus me-2"></i>Create Quiz
+                    </a>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-lg-10 col-md-9 main-content">
+            <div class="p-4">
+                
+                <!-- Dashboard Header -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h2 class="mb-1">Welcome back, <span class="text-primary">Student Name</span>!</h2>
+                                        <p class="text-muted mb-0">Continue your learning journey and track your progress</p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <div class="progress-circle" style="--progress: 75%;">
+                                            <div class="progress-text">75%</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card stats-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-book fa-3x mb-3"></i>
+                                <h3 class="mb-1">24</h3>
+                                <p class="mb-0">Notes Downloaded</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card quiz-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-question-circle fa-3x mb-3"></i>
+                                <h3 class="mb-1">12</h3>
+                                <p class="mb-0">Quizzes Completed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card notes-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-trophy fa-3x mb-3"></i>
+                                <h3 class="mb-1">85%</h3>
+                                <p class="mb-0">Average Score</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="card forum-card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-comments fa-3x mb-3"></i>
+                                <h3 class="mb-1">8</h3>
+                                <p class="mb-0">Forum Posts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Notes</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Mathematics - Calculus Basics</h6>
+                                            <small class="text-muted">Uploaded by Dr. Smith • 2 days ago</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-primary rounded-pill">PDF</span>
+                                            <button class="btn btn-sm btn-outline-primary ms-2">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Physics - Quantum Mechanics</h6>
+                                            <small class="text-muted">Uploaded by Prof. Johnson • 3 days ago</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-success rounded-pill">DOCX</span>
+                                            <button class="btn btn-sm btn-outline-primary ms-2">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">Chemistry - Organic Compounds</h6>
+                                            <small class="text-muted">Uploaded by Dr. Williams • 1 week ago</small>
+                                        </div>
+                                        <div>
+                                            <span class="badge bg-warning rounded-pill">PPT</span>
+                                            <button class="btn btn-sm btn-outline-primary ms-2">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4 mb-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Available Quizzes</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <div class="quiz-item p-3 border rounded-3">
+                                        <h6 class="mb-1">Mathematics Quiz #1</h6>
+                                        <small class="text-muted">20 Questions • 30 minutes</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-success">Easy</span>
+                                            <button class="btn btn-sm btn-primary float-end">Take Quiz</button>
+                                        </div>
+                                    </div>
+                                    <div class="quiz-item p-3 border rounded-3">
+                                        <h6 class="mb-1">Physics Quiz #2</h6>
+                                        <small class="text-muted">15 Questions • 25 minutes</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-warning">Medium</span>
+                                            <button class="btn btn-sm btn-primary float-end">Take Quiz</button>
+                                        </div>
+                                    </div>
+                                    <div class="quiz-item p-3 border rounded-3">
+                                        <h6 class="mb-1">Chemistry Quiz #1</h6>
+                                        <small class="text-muted">25 Questions • 45 minutes</small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-danger">Hard</span>
+                                            <button class="btn btn-sm btn-primary float-end">Take Quiz</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quiz Taking Interface -->
+                <div class="row" id="quizInterface" style="display: none;">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Mathematics Quiz #1</h5>
+                                <div class="timer">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <span id="timeRemaining">30:00</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="progress mb-4">
+                                    <div class="progress-bar" role="progressbar" style="width: 20%"></div>
+                                </div>
+                                
+                                <div class="question-container">
+                                    <h4 class="mb-4">Question 1 of 20</h4>
+                                    <p class="lead mb-4">What is the derivative of x²?</p>
+                                    
+                                    <div class="options">
+                                        <div class="quiz-option" onclick="selectOption(this, 0)">
+                                            <label class="form-check-label w-100">
+                                                <input class="form-check-input me-2" type="radio" name="answer" value="0">
+                                                2x
+                                            </label>
+                                        </div>
+                                        <div class="quiz-option" onclick="selectOption(this, 1)">
+                                            <label class="form-check-label w-100">
+                                                <input class="form-check-input me-2" type="radio" name="answer" value="1">
+                                                x²
+                                            </label>
+                                        </div>
+                                        <div class="quiz-option" onclick="selectOption(this, 2)">
+                                            <label class="form-check-label w-100">
+                                                <input class="form-check-input me-2" type="radio" name="answer" value="2">
+                                                x
+                                            </label>
+                                        </div>
+                                        <div class="quiz-option" onclick="selectOption(this, 3)">
+                                            <label class="form-check-label w-100">
+                                                <input class="form-check-input me-2" type="radio" name="answer" value="3">
+                                                2x²
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-4">
+                                    <button class="btn btn-outline-secondary" id="prevBtn" disabled>
+                                        <i class="fas fa-arrow-left me-2"></i>Previous
+                                    </button>
+                                    <button class="btn btn-primary" id="nextBtn">
+                                        Next<i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes Upload Form -->
+                <div class="row" id="uploadForm" style="display: none;">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Study Notes</h5>
+                            </div>
+                            <div class="card-body">
+                                <form action="/notes/upload" method="POST" enctype="multipart/form-data">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="title" class="form-label">Title</label>
+                                            <input type="text" class="form-control" id="title" name="title" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="subject" class="form-label">Subject</label>
+                                            <select class="form-select" id="subject" name="subject" required>
+                                                <option value="">Select Subject</option>
+                                                <option value="Mathematics">Mathematics</option>
+                                                <option value="Physics">Physics</option>
+                                                <option value="Chemistry">Chemistry</option>
+                                                <option value="Biology">Biology</option>
+                                                <option value="Computer Science">Computer Science</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="tags" class="form-label">Tags (comma separated)</label>
+                                        <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g., calculus, derivatives, mathematics">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="file" class="form-label">Upload File</label>
+                                        <input type="file" class="form-control" id="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx" required>
+                                        <div class="form-text">Supported formats: PDF, DOC, DOCX, PPT, PPTX</div>
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-upload me-2"></i>Upload Notes
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Study Plan Generator -->
+                <div class="row" id="studyPlanGenerator" style="display: none;">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-robot me-2"></i>AI Study Plan Generator</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="generateStudyPlan">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="examDate" class="form-label">Exam Date</label>
+                                            <input type="date" class="form-control" id="examDate" name="examDate" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="dailyHours" class="form-label">Daily Study Hours</label>
+                                            <select class="form-select" id="dailyHours" name="dailyHours" required>
+                                                <option value="2">2 hours</option>
+                                                <option value="3">3 hours</option>
+                                                <option value="4">4 hours</option>
+                                                <option value="5">5 hours</option>
+                                                <option value="6">6 hours</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Subjects</label>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="math" name="subjects" value="Mathematics">
+                                                    <label class="form-check-label" for="math">Mathematics</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="physics" name="subjects" value="Physics">
+                                                    <label class="form-check-label" for="physics">Physics</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="chemistry" name="subjects" value="Chemistry">
+                                                    <label class="form-check-label" for="chemistry">Chemistry</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="biology" name="subjects" value="Biology">
+                                                    <label class="form-check-label" for="biology">Biology</label>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="cs" name="subjects" value="Computer Science">
+                                                    <label class="form-check-label" for="cs">Computer Science</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-magic me-2"></i>Generate AI Study Plan
+                                        </button>
+                                    </div>
+                                </form>
+                                
+                                <div id="studyPlanResult" class="mt-4" style="display: none;">
+                                    <div class="alert alert-success">
+                                        <h6><i class="fas fa-check-circle me-2"></i>Study Plan Generated!</h6>
+                                        <p class="mb-0">Your personalized study plan has been created based on your preferences.</p>
+                                    </div>
+                                    
+                                    <div class="timeline">
+                                        <div class="timeline-item">
+                                            <div class="timeline-marker bg-primary"></div>
+                                            <div class="timeline-content">
+                                                <h6>Week 1: Foundation Building</h6>
+                                                <p>Focus on basic concepts in Mathematics and Physics</p>
+                                                <small class="text-muted">2 hours daily</small>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-marker bg-success"></div>
+                                            <div class="timeline-content">
+                                                <h6>Week 2: Advanced Topics</h6>
+                                                <p>Dive deeper into complex problems and applications</p>
+                                                <small class="text-muted">3 hours daily</small>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-item">
+                                            <div class="timeline-marker bg-warning"></div>
+                                            <div class="timeline-content">
+                                                <h6>Week 3: Practice & Review</h6>
+                                                <p>Solve practice problems and take mock tests</p>
+                                                <small class="text-muted">4 hours daily</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Quiz functionality
+    let currentQuestion = 0;
+    let selectedAnswers = {};
+    let quizTimer;
+    let timeLeft = 1800; // 30 minutes in seconds
+
+    function selectOption(element, optionIndex) {
+        // Remove previous selection
+        document.querySelectorAll('.quiz-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        
+        // Select current option
+        element.classList.add('selected');
+        element.querySelector('input').checked = true;
+        
+        // Store answer
+        selectedAnswers[currentQuestion] = optionIndex;
+    }
+
+    function startQuiz() {
+        document.getElementById('quizInterface').style.display = 'block';
+        document.querySelector('.main-content > div').style.display = 'none';
+        startTimer();
+    }
+
+    function startTimer() {
+        quizTimer = setInterval(() => {
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timeRemaining').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(quizTimer);
+                submitQuiz();
+            }
+        }, 1000);
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        updateProgress();
+        // Load next question logic here
+    }
+
+    function previousQuestion() {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            updateProgress();
+            // Load previous question logic here
+        }
+    }
+
+    function updateProgress() {
+        const progress = ((currentQuestion + 1) / 20) * 100;
+        document.querySelector('.progress-bar').style.width = progress + '%';
+        
+        // Update buttons
+        document.getElementById('prevBtn').disabled = currentQuestion === 0;
+        document.getElementById('nextBtn').textContent = 
+            currentQuestion === 19 ? 'Submit Quiz' : 'Next';
+    }
+
+    function submitQuiz() {
+        clearInterval(quizTimer);
+        // Submit quiz logic here
+        alert('Quiz submitted successfully!');
+        showResults();
+    }
+
+    function showResults() {
+        const score = Math.floor(Math.random() * 20) + 1; // Mock score
+        const percentage = Math.round((score / 20) * 100);
+        
+        document.getElementById('quizInterface').innerHTML = `
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-trophy fa-5x text-warning mb-4"></i>
+                        <h2 class="mb-3">Quiz Completed!</h2>
+                        <div class="row justify-content-center">
+                            <div class="col-md-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h3>${score}/20</h3>
+                                        <p class="mb-0">Correct Answers</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h3>${percentage}%</h3>
+                                        <p class="mb-0">Score Percentage</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mt-4" onclick="returnToDashboard()">
+                            Return to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function returnToDashboard() {
+        document.getElementById('quizInterface').style.display = 'none';
+        document.querySelector('.main-content > div').style.display = 'block';
+    }
+
+    // Show upload form
+    function showUploadForm() {
+        document.getElementById('uploadForm').style.display = 'block';
+        document.querySelector('.main-content > div').style.display = 'none';
+    }
+
+    // Show study plan generator
+    function showStudyPlanGenerator() {
+        document.getElementById('studyPlanGenerator').style.display = 'block';
+        document.querySelector('.main-content > div').style.display = 'none';
+    }
+
+    // Generate study plan
+    document.getElementById('generateStudyPlan')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading
+        this.querySelector('button').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+        this.querySelector('button').disabled = true;
+        
+        // Simulate API call
+        setTimeout(() => {
+            document.getElementById('studyPlanResult').style.display = 'block';
+            this.querySelector('button').innerHTML = '<i class="fas fa-magic me-2"></i>Generate AI Study Plan';
+            this.querySelector('button').disabled = false;
+        }, 2000);
+    });
+
+    // Flash message functions
+    function showSuccessMessage(message) {
+        document.getElementById('successMessage').textContent = message;
+        document.getElementById('successAlert').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('successAlert').style.display = 'none';
+        }, 5000);
+    }
+
+    function showErrorMessage(message) {
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorAlert').style.display = 'block';
+        setTimeout(() => {
+            document.getElementById('errorAlert').style.display = 'none';
+        }, 5000);
+    }
+
+    // Like/Unlike notes functionality
+    function likeNote(noteId, button) {
+        fetch(`/notes/like/${noteId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const icon = button.querySelector('i');
+                const count = button.querySelector('.like-count');
+                
+                if (data.liked) {
+                    icon.className = 'fas fa-heart';
+                    button.classList.add('text-danger');
+                } else {
+                    icon.className = 'far fa-heart';
+                    button.classList.remove('text-danger');
+                }
+                
+                if (count) {
+                    count.textContent = data.likes;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorMessage('Failed to update like status');
+        });
+    }
+
+    // Download note functionality
+    function downloadNote(noteId, title) {
+        window.open(`/notes/download/${noteId}`, '_blank');
+        showSuccessMessage(`Downloading "${title}"`);
+    }
+
+    // Progress tracking functionality
+    function updateProgress(subject, topic, completed) {
+        fetch('/dashboard/progress', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                subject: subject,
+                topic: topic,
+                action: completed ? 'complete' : 'uncomplete'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update progress bar
+                const progressElement = document.querySelector(`[data-subject="${subject}"] .progress-bar`);
+                if (progressElement) {
+                    progressElement.style.width = data.percentage + '%';
+                    progressElement.textContent = data.percentage + '%';
+                }
+                
+                showSuccessMessage('Progress updated successfully');
+            } else {
+                showErrorMessage('Failed to update progress');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showErrorMessage('Failed to update progress');
+        });
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Add click handlers for quiz buttons
+        document.querySelectorAll('.quiz-item button').forEach(button => {
+            button.addEventListener('click', startQuiz);
+        });
+        
+        // Add click handlers for navigation
+        document.querySelector('a[href="/notes/upload"]')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            showUploadForm();
+        });
+        
+        document.querySelector('a[href="/ai/study-plan"]')?.addEventListener('click', function(e) {
+            e.preventDefault();
+            showStudyPlanGenerator();
+        });
+        
+        // Quiz navigation
+        document.getElementById('nextBtn')?.addEventListener('click', function() {
+            if (currentQuestion === 19) {
+                submitQuiz();
+            } else {
+                nextQuestion();
+            }
+        });
+        
+        document.getElementById('prevBtn')?.addEventListener('click', previousQuestion);
+    });
+
+    // Search functionality
+    function searchNotes() {
+        const searchTerm = document.getElementById('searchInput').value;
+        const subject = document.getElementById('subjectFilter').value;
+        
+        let url = '/notes?';
+        if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+        if (subject) url += `subject=${encodeURIComponent(subject)}&`;
+        
+        window.location.href = url;
+    }
+
+    // File upload preview
+    function previewFile(input) {
+        const file = input.files[0];
+        if (file) {
+            const fileName = file.name;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            const preview = document.getElementById('filePreview');
+            
+            preview.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-file me-2"></i>
+                    <strong>${fileName}</strong> (${fileSize} MB)
+                </div>
+            `;
+            preview.style.display = 'block';
+        }
+    }
+
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        sidebar.classList.toggle('show');
+    }
+
+    // Dark mode toggle (optional)
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    // Load dark mode preference
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
+
+    // Auto-save form data
+    function autoSaveForm(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        localStorage.setItem(`form_${formId}`, JSON.stringify(data));
+    }
+
+    // Restore form data
+    function restoreFormData(formId) {
+        const savedData = localStorage.getItem(`form_${formId}`);
+        if (!savedData) return;
+        
+        const data = JSON.parse(savedData);
+        const form = document.getElementById(formId);
+        
+        for (let [key, value] of Object.entries(data)) {
+            const input = form.querySelector(`[name="${key}"]`);
+            if (input) {
+                input.value = value;
+            }
+        }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + / for search focus
+        if (e.ctrlKey && e.key === '/') {
+            e.preventDefault();
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+        
+        // Escape to close modals/forms
+        if (e.key === 'Escape') {
+            // Close any open forms or return to dashboard
+            if (document.getElementById('quizInterface').style.display !== 'none') {
+                returnToDashboard();
+            }
+        }
+    });
+</script>
+
+<style>
+    /* Additional styles for better UX */
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 20px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: 0;
+        top: 5px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+    }
+
+    .timeline-content {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .dark-mode {
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        color: white;
+    }
+
+    .dark-mode .card {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .dark-mode .navbar {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    .dark-mode .sidebar {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    .like-button {
+        border: none;
+        background: none;
+        color: #6b7280;
+        transition: all 0.3s ease;
+    }
+
+    .like-button:hover {
+        color: #ef4444;
+        transform: scale(1.1);
+    }
+
+    .like-button.liked {
+        color: #ef4444;
+    }
+
+    .search-container {
+        position: relative;
+    }
+
+    .search-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        display: none;
+    }
+
+    .search-suggestion {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+    .search-suggestion:hover {
+        background-color: #f3f4f6;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar.show {
+            position: fixed;
+            top: 76px;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: block !important;
+        }
+        
+        .progress-circle {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .progress-circle::before {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .progress-text {
+            font-size: 1rem;
+        }
+        
+        .stats-card .card-body {
+            padding: 15px;
+        }
+        
+        .stats-card i {
+            font-size: 2rem !important;
+        }
+        
+        .stats-card h3 {
+            font-size: 1.5rem;
+        }
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .loading-spinner.show {
+        display: block;
+    }
+
+    .file-drop-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .file-drop-zone:hover,
+    .file-drop-zone.dragover {
+        border-color: var(--primary-color);
+        background-color: rgba(79, 70, 229, 0.05);
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>
+
+</body>
+</html>
