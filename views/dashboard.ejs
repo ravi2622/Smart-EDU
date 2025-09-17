@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard - Smart EDU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+  <style>
+    body { background: #f8f9fa; }
+    .sidebar { min-height: 100vh; background: #212529; color: #fff; }
+    .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 12px; }
+    .sidebar a:hover { background: #343a40; color: #fff; }
+    .progress { height: 25px; }
+    .card { border-radius: 12px; }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 sidebar d-md-block p-0">
+      <div class="p-3">
+        <h4 class="text-white">Smart EDU</h4>
+        <p class="small">Hello, <strong><%= user.name %></strong></p>
+        <a href="/dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a>
+        <a href="/notes"><i class="bi bi-journal-text"></i> Notes</a>
+        <a href="/quiz"><i class="bi bi-question-circle"></i> Quizzes</a>
+        <a href="/forum"><i class="bi bi-chat-left-text"></i> Forum</a>
+        <a href="/ai/study-plan"><i class="bi bi-robot"></i> AI Study Plan</a>
+        <a href="/dashboard/profile"><i class="bi bi-person-circle"></i> Profile</a>
+        <a href="/logout" class="text-danger"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-4">
+      <div class="pt-3">
+        
+        <!-- Flash messages -->
+        <% if (success_msg) { %><div class="alert alert-success"><%= success_msg %></div><% } %>
+        <% if (error_msg) { %><div class="alert alert-danger"><%= error_msg %></div><% } %>
+        <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+        <!-- Welcome -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h3 class="mb-1">Welcome, <%= user.name %>!</h3>
+            <p class="text-muted">Role: <%= user.role %></p>
+            <h6>Your Overall Progress</h6>
+            <div class="progress mb-2">
+              <div class="progress-bar bg-success" role="progressbar"
+                   style="width: <%= overallProgress %>%"
+                   aria-valuenow="<%= overallProgress %>" aria-valuemin="0" aria-valuemax="100">
+                <%= overallProgress %>%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <a href="/notes" class="card text-center shadow-sm text-decoration-none">
+              <div class="card-body">
+                <i class="bi bi-journal-text display-5 text-primary"></i>
+                <h6 class="mt-2">Notes</h6>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-3">
+            <a href="/quiz" class="card text-center shadow-sm text-decoration-none">
+              <div class="card-body">
+                <i class="bi bi-question-circle display-5 text-success"></i>
+                <h6 class="mt-2">Quizzes</h6>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-3">
+            <a href="/forum" class="card text-center shadow-sm text-decoration-none">
+              <div class="card-body">
+                <i class="bi bi-chat-left-text display-5 text-warning"></i>
+                <h6 class="mt-2">Forum</h6>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-3">
+            <a href="/ai/study-plan" class="card text-center shadow-sm text-decoration-none">
+              <div class="card-body">
+                <i class="bi bi-robot display-5 text-danger"></i>
+                <h6 class="mt-2">AI Study Plan</h6>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="row">
+          <!-- Recent Notes -->
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+              <div class="card-header bg-primary text-white">Recent Notes</div>
+              <ul class="list-group list-group-flush">
+                <% if (recentNotes.length > 0) { %>
+                  <% recentNotes.forEach(note => { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong><%= note.title %></strong>
+                        <br><small class="text-muted">by <%= note.uploadedBy ? note.uploadedBy.name : "Unknown" %></small>
+                      </div>
+                      <a href="/notes/download/<%= note._id %>" class="btn btn-sm btn-outline-primary">Download</a>
+                    </li>
+                  <% }) %>
+                <% } else { %>
+                  <li class="list-group-item">No notes uploaded yet.</li>
+                <% } %>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Available Quizzes -->
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+              <div class="card-header bg-success text-white">Available Quizzes</div>
+              <ul class="list-group list-group-flush">
+                <% if (availableQuizzes.length > 0) { %>
+                  <% availableQuizzes.forEach(quiz => { %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong><%= quiz.title %></strong>
+                        <br><small class="text-muted">by <%= quiz.createdBy ? quiz.createdBy.name : "Unknown" %></small>
+                      </div>
+                      <a href="/quiz/take/<%= quiz._id %>" class="btn btn-sm btn-outline-success">Take Quiz</a>
+                    </li>
+                  <% }) %>
+                <% } else { %>
+                  <li class="list-group-item">No quizzes available yet.</li>
+                <% } %>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Forum -->
+        <div class="card shadow-sm mb-5">
+          <div class="card-header bg-warning">Recent Forum Questions</div>
+          <ul class="list-group list-group-flush">
+            <% if (recentQuestions.length > 0) { %>
+              <% recentQuestions.forEach(q => { %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <a href="/forum/<%= q._id %>"><%= q.title %></a>
+                    <br><small class="text-muted">asked by <%= q.askedBy ? q.askedBy.name : "Anonymous" %></small>
+                  </div>
+                  <a href="/forum/<%= q._id %>" class="btn btn-sm btn-outline-warning">View</a>
+                </li>
+              <% }) %>
+            <% } else { %>
+              <li class="list-group-item">No questions yet.</li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
