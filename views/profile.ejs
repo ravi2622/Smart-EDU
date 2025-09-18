@@ -2,90 +2,149 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Profile - Smart EDU</title>
+  <title>Profile | Smart EDU</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bs-font-sans-serif: 'Poppins', sans-serif;
+      --bs-primary: #0d6efd;
+      --bs-secondary: #6c757d;
+    }
+    body {
+      font-family: var(--bs-font-sans-serif);
+      background: #f0f2f5;
+    }
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .navbar-brand {
+      font-weight: 700;
+    }
+    .profile-card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+    }
+    .profile-card .card-header {
+      background-color: var(--bs-primary);
+      border-top-left-radius: 1rem;
+      border-top-right-radius: 1rem;
+    }
+    .profile-card .card-body {
+      padding: 2rem;
+    }
+    .form-floating > .form-control, .form-floating > .form-select, .form-floating > .form-textarea {
+      height: calc(3.5rem + 2px);
+      line-height: 1.25;
+      padding: 1rem 0.75rem;
+    }
+    .form-floating > .form-textarea {
+      height: auto;
+    }
+    .btn-primary {
+      background-color: var(--bs-primary);
+      border-color: var(--bs-primary);
+    }
+    .btn-primary:hover {
+      background-color: #0b5ed7;
+      border-color: #0b5ed7;
+    }
+    .alert-dismissible {
+      position: relative;
+    }
+    .alert-dismissible .btn-close {
+      position: absolute;
+      top: 0.5rem;
+      right: 1rem;
+    }
+  </style>
 </head>
-<body class="bg-light">
+<body class="d-flex flex-column" style="min-height: 100vh;">
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container">
-      <a class="navbar-brand" href="/dashboard">Smart EDU</a>
-      <div class="d-flex">
-        <span class="navbar-text me-3">Hello, <%= user.name %></span>
-        <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+      <a class="navbar-brand fs-4" href="/dashboard">Smart EDU</a>
+      <div class="d-flex align-items-center">
+        <span class="navbar-text me-3 text-white fw-semibold">Hello, <%= user.name %></span>
+        <a href="/logout" class="btn btn-outline-light rounded-pill btn-sm">Logout</a>
       </div>
     </div>
   </nav>
 
-  <div class="container">
+  <main class="container py-4 flex-grow-1">
     <!-- Flash messages -->
-    <% if (success_msg) { %>
-      <div class="alert alert-success"><%= success_msg %></div>
+    <% if (success_msg && success_msg.length) { %>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <%= success_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
     <% } %>
-    <% if (error_msg) { %>
-      <div class="alert alert-danger"><%= error_msg %></div>
+    <% if (error_msg && error_msg.length) { %>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <%= error_msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
     <% } %>
 
     <!-- Profile Form -->
-    <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">Edit Profile</h5>
-      </div>
-      <div class="card-body">
-        <form action="/dashboard/profile" method="POST">
-          <!-- Name -->
-          <div class="mb-3">
-            <label for="name" class="form-label">Full Name</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              id="name" 
-              name="name" 
-              value="<%= user.name %>" 
-              required>
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card profile-card">
+          <div class="card-header text-white text-center py-3">
+            <h5 class="mb-0 fw-bold">Edit Profile</h5>
           </div>
+          <div class="card-body">
+            <form action="/dashboard/profile" method="POST">
+              <!-- Full Name -->
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="name" name="name" placeholder="Full Name" value="<%= user.name %>" required>
+                <label for="name"><i class="bi bi-person me-2"></i>Full Name</label>
+              </div>
 
-          <!-- Grade -->
-          <div class="mb-3">
-            <label for="grade" class="form-label">Grade / Class</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              id="grade" 
-              name="grade" 
-              value="<%= user.profile && user.profile.grade ? user.profile.grade : '' %>">
+              <!-- Grade -->
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="grade" name="grade" placeholder="Grade / Class" value="<%= user.profile && user.profile.grade ? user.profile.grade : '' %>">
+                <label for="grade"><i class="bi bi-book-half me-2"></i>Grade / Class</label>
+              </div>
+
+              <!-- Subjects -->
+              <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="subjects" name="subjects" placeholder="Subjects" value="<%= user.profile && user.profile.subjects ? user.profile.subjects.join(', ') : '' %>">
+                <label for="subjects"><i class="bi bi-list-task me-2"></i>Subjects (comma separated)</label>
+                <small class="text-muted mt-2 d-block">Example: Math, Physics, Chemistry</small>
+              </div>
+
+              <!-- Bio -->
+              <div class="form-floating mb-4">
+                <textarea class="form-control" id="bio" name="bio" placeholder="Tell us about yourself" style="height: 100px"><%= user.profile && user.profile.bio ? user.profile.bio : '' %></textarea>
+                <label for="bio"><i class="bi bi-chat-left-text me-2"></i>Bio</label>
+              </div>
+
+              <!-- Action buttons -->
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="/dashboard" class="btn btn-secondary rounded-pill px-4">Back</a>
+                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                  <i class="bi bi-save me-2"></i>Save Changes
+                </button>
+              </div>
+            </form>
           </div>
-
-          <!-- Subjects -->
-          <div class="mb-3">
-            <label for="subjects" class="form-label">Subjects (comma separated)</label>
-            <input 
-              type="text" 
-              class="form-control" 
-              id="subjects" 
-              name="subjects" 
-              value="<%= user.profile && user.profile.subjects ? user.profile.subjects.join(', ') : '' %>">
-            <small class="text-muted">Example: Math, Physics, Chemistry</small>
-          </div>
-
-          <!-- Bio -->
-          <div class="mb-3">
-            <label for="bio" class="form-label">Bio</label>
-            <textarea 
-              class="form-control" 
-              id="bio" 
-              name="bio" 
-              rows="3"><%= user.profile && user.profile.bio ? user.profile.bio : '' %></textarea>
-          </div>
-
-          <!-- Save button -->
-          <button type="submit" class="btn btn-success">Save Changes</button>
-          <a href="/dashboard" class="btn btn-secondary">Back</a>
-        </form>
+        </div>
       </div>
     </div>
-  </div>
+  </main>
 
+  <!-- Footer -->
+  <footer class="bg-dark text-white text-center py-3">
+    <p class="mb-0">&copy; 2023 Smart EDU. All Rights Reserved.</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

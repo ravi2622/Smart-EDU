@@ -87,7 +87,6 @@
 
 // module.exports = mongoose.model('User', UserSchema);
 
-
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
@@ -111,7 +110,7 @@ const UserSchema = new mongoose.Schema(
       {
         subject: String,
         topicsCompleted: [String],
-        totalTopics: Number,
+        totalTopics: { type: Number, default: 0 },
         percentage: { type: Number, default: 0 },
       },
     ],
@@ -140,9 +139,25 @@ const UserSchema = new mongoose.Schema(
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    // optional extra fields if you want leaderboard/engagement later
+    engagement: {
+      notesDownloaded: { type: Number, default: 0 },
+      notesLiked: { type: Number, default: 0 },
+      quizzesAttempted: { type: Number, default: 0 },
+    },
+    badges: [
+      {
+        name: String,
+        earnedAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
+
+// --------------------
+// Middleware
+// --------------------
 
 // Hash password before saving
 UserSchema.pre("save", async function (next) {
@@ -152,9 +167,28 @@ UserSchema.pre("save", async function (next) {
   next();
 });
 
+// --------------------
+// Instance Methods
+// --------------------
+
 // Compare password method
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Update progress percentages
+UserSchema.methods.updateProgress = function () {
+  if (!this.progress) return;
+
+  this.progress.forEach((p) => {
+    if (p.totalTopics && p.totalTopics > 0) {
+      p.percentage = Math.round(
+        (p.topicsCompleted.length / p.totalTopics) * 100
+      );
+    } else {
+      p.percentage = p.topicsCompleted.length ? 100 : 0;
+    }
+  });
 };
 
 module.exports = mongoose.model("User", UserSchema);
