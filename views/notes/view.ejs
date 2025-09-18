@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= note.title %> - Smart EDU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+</head>
+<body class="bg-light">
+
+  <div class="container py-4">
+    <a href="/notes" class="btn btn-link mb-3">⬅ Back to Notes</a>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="fw-bold"><%= note.title %></h2>
+        <p class="text-muted mb-1"><strong>Subject:</strong> <%= note.subject %></p>
+        <p class="text-muted mb-1"><strong>Uploaded by:</strong> 
+          <%= note.uploadedBy ? note.uploadedBy.name : "Unknown" %>
+          <% if (note.uploadedBy && note.uploadedBy.role) { %>
+            <span class="badge bg-info text-dark"><%= note.uploadedBy.role %></span>
+          <% } %>
+        </p>
+        <p class="text-muted"><strong>Uploaded on:</strong> <%= note.createdAt.toDateString() %></p>
+
+        <hr>
+
+        <p><%= note.description %></p>
+
+        <% if (note.tags && note.tags.length > 0) { %>
+          <p>
+            <strong>Tags:</strong>
+            <% note.tags.forEach(tag => { %>
+              <span class="badge bg-secondary"><%= tag %></span>
+            <% }) %>
+          </p>
+        <% } %>
+
+        <hr>
+
+        <div class="d-flex gap-2">
+          <!-- Direct Cloudinary file URL -->
+          <a href="<%= note.fileUrl %>" class="btn btn-success" target="_blank" download>
+            📥 Download
+          </a>
+
+          <button class="btn btn-outline-primary like-btn" data-id="<%= note._id %>">
+            ❤️ Like (<span class="like-count"><%= note.likes.length %></span>)
+          </button>
+
+          <span class="ms-auto text-muted">Downloads: <%= note.downloads %></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(".like-btn").click(function () {
+      const btn = $(this);
+      const id = btn.data("id");
+
+      $.post(`/notes/like/${id}`, {}, function (data) {
+        if (data.success) {
+          btn.find(".like-count").text(data.likes);
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

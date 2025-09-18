@@ -1,0 +1,18 @@
+<% if (success_msg && success_msg.length) { %>
+              <div class="alert alert-success">
+                <%= success_msg %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
+            <% if (error_msg && error_msg.length) { %>
+              <div class="alert alert-danger">
+                <%= error_msg %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>
+            <% if (error && error.length) { %>
+              <div class="alert alert-danger">
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            <% } %>

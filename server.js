@@ -89,6 +89,7 @@ const passport = require('passport');
 const flash = require('connect-flash');
 const methodOverride = require('method-override');
 const path = require('path');
+const ExpressError = require("./utils/ExpressError");
 
 // Passport Config
 require('./config/passport')(passport);
@@ -139,12 +140,15 @@ app.use(passport.session());
 // Connect flash
 app.use(flash());
 
-// Global variables (accessible in all EJS templates)
+// Global variables
 app.use((req, res, next) => {
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');
   res.locals.error = req.flash('error'); // passport errors
   res.locals.user = req.user || null;
+  // console.log(res.locals.success_msg);
+  // console.log(res.locals.error_msg);
+  // console.log(res.locals.error);
   next();
 });
 
@@ -162,6 +166,20 @@ app.use('/forgot-password', require('./routes/forgotPassword'));
 // Home page
 app.get('/', (req, res) => {
   res.render('index');
+});
+
+app.all("*", (req, res, next) => {
+  console.log("new error!");
+  throw new ExpressError(404, "Page Not Found!");
+});
+
+app.use((err, req, res, next) => {
+  let { statusCode = 500, message = "something went wrong!" } = err;
+  console.log(err.message);
+
+  res.status(statusCode).render("error.ejs", { err });
+
+  // res.status(statusCode).send(message);
 });
 
 // --------------------

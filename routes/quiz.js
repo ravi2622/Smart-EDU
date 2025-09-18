@@ -82,6 +82,97 @@ router.post('/create', ensureAuthenticated, ensureTeacher, async (req, res) => {
   }
 });
 
+// Edit quiz form (teachers only)
+router.get('/edit/:id', ensureAuthenticated, ensureTeacher, async (req, res) => {
+  try {
+    const quiz = await Quiz.findOne({ _id: req.params.id, createdBy: req.user._id });
+    if (!quiz) {
+      req.flash('error_msg', 'Quiz not found or not authorized');
+      return res.redirect('/quiz/manage');
+    }
+    res.render('quiz/edit', { quiz });
+  } catch (error) {
+    console.error(error);
+    req.flash('error_msg', 'Error loading quiz');
+    res.redirect('/quiz/manage');
+  }
+});
+
+// Update quiz
+router.post('/edit/:id', ensureAuthenticated, ensureTeacher, async (req, res) => {
+  try {
+    const { title, subject, description, timeLimit, difficulty, questions } = req.body;
+
+    const quiz = await Quiz.findOne({ _id: req.params.id, createdBy: req.user._id });
+    if (!quiz) {
+      req.flash('error_msg', 'Quiz not found or not authorized');
+      return res.redirect('/quiz/manage');
+    }
+
+    // Update fields
+    quiz.title = title;
+    quiz.subject = subject;
+    quiz.description = description;
+    quiz.timeLimit = parseInt(timeLimit) || 30;
+    quiz.difficulty = difficulty || 'medium';
+
+    // Parse questions
+    const parsedQuestions = [];
+    if (questions && Array.isArray(questions)) {
+      for (let q of questions) {
+        if (q.question && q.options && q.options.length >= 2) {
+          parsedQuestions.push({
+            question: q.question,
+            options: q.options.map((option, index) => ({
+              text: option,
+              isCorrect: q.correctAnswer == index
+            })),
+            explanation: q.explanation || ''
+          });
+        }
+      }
+    }
+    quiz.questions = parsedQuestions;
+
+    await quiz.save();
+    req.flash('success_msg', 'Quiz updated successfully');
+    res.redirect('/quiz/manage');
+  } catch (error) {
+    console.error(error);
+    req.flash('error_msg', 'Error updating quiz');
+    res.redirect('/quiz/manage');
+  }
+});
+
+
+// Manage quizzes (teachers only)
+router.get('/manage', ensureAuthenticated, ensureTeacher, async (req, res) => {
+  try {
+    const quizzes = await Quiz.find({ createdBy: req.user._id })
+      .sort({ createdAt: -1 });
+    
+    res.render('quiz/manage', { quizzes });
+  } catch (error) {
+    console.error(error);
+    req.flash('error_msg', 'Error loading your quizzes');
+    res.redirect('/dashboard');
+  }
+});
+
+// Delete quiz (teachers only)
+router.post('/delete/:id', ensureAuthenticated, ensureTeacher, async (req, res) => {
+  try {
+    await Quiz.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
+    req.flash('success_msg', 'Quiz deleted successfully');
+    res.redirect('/quiz/manage');
+  } catch (error) {
+    console.error(error);
+    req.flash('error_msg', 'Error deleting quiz');
+    res.redirect('/quiz/manage');
+  }
+});
+
+
 // Take quiz
 router.get('/take/:id', ensureAuthenticated, async (req, res) => {
   try {

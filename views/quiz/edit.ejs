@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Quiz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f8f9fa; }
+    .question-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/dashboard">EduPlatform</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="/quiz">Quizzes</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/quiz/manage">Manage Quizzes</a></li>
+          <li class="nav-item"><a class="nav-link" href="/notes">Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <h2 class="fw-bold mb-3">Edit Quiz: <%= quiz.title %></h2>
+
+    <form action="/quiz/edit/<%= quiz._id %>" method="POST" id="quizForm">
+      <!-- Basic Info -->
+      <div class="mb-3">
+        <label class="form-label">Quiz Title</label>
+        <input type="text" name="title" class="form-control" value="<%= quiz.title %>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Subject</label>
+        <input type="text" name="subject" class="form-control" value="<%= quiz.subject %>" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control"><%= quiz.description %></textarea>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Time Limit (minutes)</label>
+          <input type="number" name="timeLimit" class="form-control" value="<%= quiz.timeLimit %>">
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Difficulty</label>
+          <select name="difficulty" class="form-select">
+            <option value="easy" <%= quiz.difficulty==='easy' ? 'selected' : '' %>>Easy</option>
+            <option value="medium" <%= quiz.difficulty==='medium' ? 'selected' : '' %>>Medium</option>
+            <option value="hard" <%= quiz.difficulty==='hard' ? 'selected' : '' %>>Hard</option>
+          </select>
+        </div>
+      </div>
+
+      <hr>
+      <h4 class="mb-3">Questions</h4>
+      <div id="questionsContainer">
+        <% quiz.questions.forEach((q, qi) => { %>
+          <div class="question-card">
+            <label>Question</label>
+            <input type="text" name="questions[<%= qi %>][question]" class="form-control mb-2" value="<%= q.question %>" required>
+            
+            <label>Options</label>
+            <% q.options.forEach((opt, oi) => { %>
+              <div class="input-group mb-2">
+                <div class="input-group-text">
+                  <input type="radio" name="questions[<%= qi %>][correctAnswer]" value="<%= oi %>" <%= opt.isCorrect ? 'checked' : '' %> required>
+                </div>
+                <input type="text" name="questions[<%= qi %>][options][]" class="form-control" value="<%= opt.text %>" required>
+              </div>
+            <% }) %>
+            
+            <label>Explanation (optional)</label>
+            <textarea name="questions[<%= qi %>][explanation]" class="form-control"><%= q.explanation %></textarea>
+          </div>
+        <% }) %>
+      </div>
+
+      <button type="button" class="btn btn-outline-secondary mb-3" id="addQuestionBtn">+ Add Question</button>
+      <br>
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+      <a href="/quiz/manage" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('addQuestionBtn').addEventListener('click', function() {
+      const container = document.getElementById('questionsContainer');
+      const index = container.children.length;
+
+      const div = document.createElement('div');
+      div.classList.add('question-card');
+      div.innerHTML = `
+        <label>Question</label>
+        <input type="text" name="questions[${index}][question]" class="form-control mb-2" required>
+        
+        <label>Options</label>
+        ${[0,1,2,3].map(i => `
+          <div class="input-group mb-2">
+            <div class="input-group-text">
+              <input type="radio" name="questions[${index}][correctAnswer]" value="${i}" ${i===0 ? 'checked' : ''} required>
+            </div>
+            <input type="text" name="questions[${index}][options][]" class="form-control" required>
+          </div>
+        `).join('')}
+        
+        <label>Explanation (optional)</label>
+        <textarea name="questions[${index}][explanation]" class="form-control"></textarea>
+      `;
+      container.appendChild(div);
+    });
+  </script>
+</body>
+</html>

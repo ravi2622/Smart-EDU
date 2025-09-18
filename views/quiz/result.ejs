@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= quiz.title %> - Result</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f8f9fa; }
+    .result-header {
+      background: #0d6efd;
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .question-card {
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .correct { color: green; font-weight: bold; }
+    .incorrect { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/dashboard">EduPlatform</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="/quiz">Quizzes</a></li>
+          <li class="nav-item"><a class="nav-link" href="/notes">Notes</a></li>
+          <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Result Summary -->
+  <div class="container py-4">
+    <div class="result-header">
+      <h2 class="fw-bold">Result: <%= quiz.title %></h2>
+      <p class="mb-1"><strong>Score:</strong> <%= attempt.score %> / <%= quiz.questions.length %></p>
+      <p class="mb-1"><strong>Percentage:</strong> 
+        <%= Math.round((attempt.score / quiz.questions.length) * 100) %>%
+      </p>
+      <p class="mb-0">
+        <strong>Status:</strong> 
+        <% if ((attempt.score / quiz.questions.length) * 100 >= 50) { %>
+          <span class="badge bg-success">Passed ✅</span>
+        <% } else { %>
+          <span class="badge bg-danger">Failed ❌</span>
+        <% } %>
+      </p>
+    </div>
+
+    <!-- Question Breakdown -->
+    <% quiz.questions.forEach((q, qIndex) => { 
+      const userAnswerIndex = attempt.answers[qIndex];
+      const userAnswer = !isNaN(userAnswerIndex) ? q.options[userAnswerIndex] : null;
+      const correctOption = q.options.find(o => o.isCorrect);
+      const isCorrect = userAnswer && userAnswer.isCorrect;
+    %>
+      <div class="card question-card mb-4 p-3">
+        <h5 class="fw-bold">Question <%= qIndex + 1 %>:</h5>
+        <p><%= q.question %></p>
+
+        <p>
+          <strong>Your Answer:</strong>
+          <% if (userAnswer) { %>
+            <span class="<%= isCorrect ? 'correct' : 'incorrect' %>">
+              <%= userAnswer.text %>
+            </span>
+          <% } else { %>
+            <span class="text-muted">Not Answered</span>
+          <% } %>
+        </p>
+
+        <p>
+          <strong>Correct Answer:</strong> 
+          <span class="text-success"><%= correctOption ? correctOption.text : "N/A" %></span>
+        </p>
+
+        <% if (q.explanation) { %>
+          <div class="alert alert-info mt-2">
+            <strong>Explanation:</strong> <%= q.explanation %>
+          </div>
+        <% } %>
+      </div>
+    <% }) %>
+
+    <div class="d-flex justify-content-between mt-3">
+      <a href="/quiz" class="btn btn-primary">⬅ Back to Quizzes</a>
+      <a href="/dashboard" class="btn btn-secondary">Go to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

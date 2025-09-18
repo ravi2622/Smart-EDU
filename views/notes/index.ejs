@@ -9,10 +9,25 @@
 <body class="bg-light">
 
   <div class="container py-4">
-    <h2 class="mb-4">📘 Notes</h2>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold">📘 Notes</h2>
+      <% if (user && user.role === "teacher") { %>
+        <a href="/notes/upload" class="btn btn-success">➕ Upload Note</a>
+      <% } %>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if (success_msg) { %>
+      <div class="alert alert-success"><%= success_msg %></div>
+    <% } %>
+    <% if (error_msg) { %>
+      <div class="alert alert-danger"><%= error_msg %></div>
+    <% } %>
 
     <!-- Filters -->
-    <form method="GET" class="row mb-3">
+    <form method="GET" class="row g-2 mb-4">
       <div class="col-md-3">
         <select name="subject" class="form-select" onchange="this.form.submit()">
           <option value="all" <%= currentSubject === "all" ? "selected" : "" %>>All Subjects</option>
@@ -25,7 +40,7 @@
         <input type="text" name="search" class="form-control" placeholder="Search notes..." value="<%= currentSearch %>">
       </div>
       <div class="col-md-3">
-        <button class="btn btn-primary w-100">Search</button>
+        <button class="btn btn-primary w-100">🔍 Search</button>
       </div>
     </form>
 
@@ -35,28 +50,52 @@
         <p class="text-muted">No notes found.</p>
       <% } else { %>
         <% notes.forEach(note => { %>
-          <div class="col-md-6 mb-3">
-            <div class="card shadow-sm">
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm border-0 h-100">
               <div class="card-body">
-                <h5><%= note.title %></h5>
-                <p><%= note.description %></p>
-                <small class="text-muted">Subject: <%= note.subject %></small><br>
-                <small>Uploaded by: <%= note.uploadedBy ? note.uploadedBy.name : "Unknown" %></small><br>
+                <!-- Title links to single note view -->
+                <h5 class="fw-bold">
+                  <a href="/notes/<%= note._id %>" class="text-decoration-none text-dark">
+                    <%= note.title %>
+                  </a>
+                </h5>
 
-                <!-- Tags -->
-                <% if (note.tags.length) { %>
-                  <p class="mt-2">
+                <p class="text-muted mb-2"><%= note.description %></p>
+
+                <!-- Subject & Tags -->
+                <p>
+                  <span class="badge bg-info text-dark">📚 <%= note.subject %></span>
+                  <% if (note.tags.length) { %>
                     <% note.tags.forEach(tag => { %>
                       <span class="badge bg-secondary"><%= tag %></span>
                     <% }) %>
-                  </p>
-                <% } %>
+                  <% } %>
+                </p>
+
+                <!-- Uploaded By -->
+                <small class="d-block mb-2">
+                  Uploaded by: <strong><%= note.uploadedBy ? note.uploadedBy.name : "Unknown" %></strong>
+                  <% if (note.uploadedBy && note.uploadedBy.role === "teacher") { %>
+                    <span class="badge bg-warning text-dark">Teacher</span>
+                  <% } else { %>
+                    <span class="badge bg-light text-dark">Student</span>
+                  <% } %>
+                </small>
 
                 <!-- Actions -->
-                <a href="/notes/download/<%= note._id %>" class="btn btn-sm btn-success">Download</a>
-                <button class="btn btn-sm btn-outline-primary like-btn" data-id="<%= note._id %>">
-                  ❤️ Like (<span class="like-count"><%= note.likes.length %></span>)
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                  <a href="/notes/download/<%= note._id %>" class="btn btn-sm btn-success">
+                    ⬇️ Download (<%= note.downloads %>)
+                  </a>
+                  <button 
+                    class="btn btn-sm <%= note.likes.some(like => like.user.toString() === (user ? user._id.toString() : "")) ? 'btn-danger' : 'btn-outline-danger' %> like-btn" 
+                    data-id="<%= note._id %>">
+                    ❤️ Like (<span class="like-count"><%= note.likes.length %></span>)
+                  </button>
+                  <a href="/notes/<%= note._id %>" class="btn btn-sm btn-outline-primary ms-auto">
+                    👁 View
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -65,14 +104,21 @@
     </div>
   </div>
 
+  <!-- Like Toggle Script -->
   <script>
-    $(".like-btn").click(function () {
+    $(".like-btn").click(function (e) {
+      e.preventDefault();
       const btn = $(this);
       const id = btn.data("id");
 
       $.post(`/notes/like/${id}`, {}, function (data) {
         if (data.success) {
           btn.find(".like-count").text(data.likes);
+          if (data.liked) {
+            btn.removeClass("btn-outline-danger").addClass("btn-danger");
+          } else {
+            btn.removeClass("btn-danger").addClass("btn-outline-danger");
+          }
         }
       });
     });
