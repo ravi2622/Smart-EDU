@@ -2,107 +2,183 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Notes - Smart EDU</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes | Smart EDU</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bs-primary: #0d6efd;
+      --bs-secondary: #6c757d;
+      --bs-success: #198754;
+      --bs-info: #0dcaf0;
+      --bs-danger: #dc3545;
+      --bs-light: #f8f9fa;
+      --bs-dark: #212529;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bs-light);
+      color: var(--bs-dark);
+    }
+    .navbar {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .notes-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .notes-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+    .filter-bar {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+    .badge-info-custom {
+      background-color: var(--bs-info);
+      color: var(--bs-dark);
+    }
+  </style>
 </head>
-<body class="bg-light">
-
-  <div class="container py-4">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold">📘 Notes</h2>
-      <% if (user && user.role === "teacher") { %>
-        <a href="/notes/upload" class="btn btn-success">➕ Upload Note</a>
-      <% } %>
-    </div>
-
-    <!-- Flash Messages -->
-    <% if (success_msg) { %>
-      <div class="alert alert-success"><%= success_msg %></div>
-    <% } %>
-    <% if (error_msg) { %>
-      <div class="alert alert-danger"><%= error_msg %></div>
-    <% } %>
-
-    <!-- Filters -->
-    <form method="GET" class="row g-2 mb-4">
-      <div class="col-md-3">
-        <select name="subject" class="form-select" onchange="this.form.submit()">
-          <option value="all" <%= currentSubject === "all" ? "selected" : "" %>>All Subjects</option>
-          <% subjects.forEach(sub => { %>
-            <option value="<%= sub %>" <%= currentSubject === sub ? "selected" : "" %>><%= sub %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div class="col-md-6">
-        <input type="text" name="search" class="form-control" placeholder="Search notes..." value="<%= currentSearch %>">
-      </div>
-      <div class="col-md-3">
-        <button class="btn btn-primary w-100">🔍 Search</button>
-      </div>
-    </form>
-
-    <!-- Notes List -->
+<body>
+  <div class="container-fluid">
     <div class="row">
-      <% if (notes.length === 0) { %>
-        <p class="text-muted">No notes found.</p>
-      <% } else { %>
-        <% notes.forEach(note => { %>
-          <div class="col-md-6 mb-4">
-            <div class="card shadow-sm border-0 h-100">
-              <div class="card-body">
-                <!-- Title links to single note view -->
-                <h5 class="fw-bold">
-                  <a href="/notes/<%= note._id %>" class="text-decoration-none text-dark">
-                    <%= note.title %>
-                  </a>
-                </h5>
+      <!-- Main Content -->
+      <main class="col-12 px-md-4">
+        <div class="container py-4">
 
-                <p class="text-muted mb-2"><%= note.description %></p>
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold"><i class="bi bi-journal-text me-2"></i>Notes</h2>
+            <% if (user && user.role === "teacher") { %>
+              <a href="/notes/upload" class="btn btn-success fw-bold">
+                <i class="bi bi-plus-circle me-2"></i>Upload Note
+              </a>
+            <% } %>
+          </div>
 
-                <!-- Subject & Tags -->
-                <p>
-                  <span class="badge bg-info text-dark">📚 <%= note.subject %></span>
-                  <% if (note.tags.length) { %>
-                    <% note.tags.forEach(tag => { %>
-                      <span class="badge bg-secondary"><%= tag %></span>
+          <!-- Flash Messages -->
+          <% if (success_msg) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              <%= success_msg %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <% } %>
+          <% if (error_msg) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <%= error_msg %>
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          <% } %>
+
+          <!-- Filters -->
+          <form method="GET" class="filter-bar mb-4">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Subject</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-folder"></i></span>
+                  <select name="subject" class="form-select">
+                    <option value="all" <%= currentSubject === "all" ? "selected" : "" %>>All Subjects</option>
+                    <% subjects.forEach(sub => { %>
+                      <option value="<%= sub %>" <%= currentSubject === sub ? "selected" : "" %>><%= sub %></option>
                     <% }) %>
-                  <% } %>
-                </p>
-
-                <!-- Uploaded By -->
-                <small class="d-block mb-2">
-                  Uploaded by: <strong><%= note.uploadedBy ? note.uploadedBy.name : "Unknown" %></strong>
-                  <% if (note.uploadedBy && note.uploadedBy.role === "teacher") { %>
-                    <span class="badge bg-warning text-dark">Teacher</span>
-                  <% } else { %>
-                    <span class="badge bg-light text-dark">Student</span>
-                  <% } %>
-                </small>
-
-                <!-- Actions -->
-                <div class="d-flex align-items-center gap-2">
-                  <a href="/notes/download/<%= note._id %>" class="btn btn-sm btn-success">
-                    ⬇️ Download (<%= note.downloads %>)
-                  </a>
-                  <button 
-                    class="btn btn-sm <%= note.likes.some(like => like.user.toString() === (user ? user._id.toString() : "")) ? 'btn-danger' : 'btn-outline-danger' %> like-btn" 
-                    data-id="<%= note._id %>">
-                    ❤️ Like (<span class="like-count"><%= note.likes.length %></span>)
-                  </button>
-                  <a href="/notes/<%= note._id %>" class="btn btn-sm btn-outline-primary ms-auto">
-                    👁 View
-                  </a>
+                  </select>
                 </div>
               </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Search</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" name="search" class="form-control" placeholder="Search notes..." value="<%= currentSearch %>">
+                </div>
+              </div>
+              <div class="col-md-4 d-flex">
+                <button class="btn btn-primary w-100 fw-bold">
+                  <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+              </div>
             </div>
+          </form>
+
+          <!-- Notes List -->
+          <div class="row g-4">
+            <% if (notes.length === 0) { %>
+              <div class="col-12 text-center py-5">
+                <p class="text-muted fw-bold fs-5">No notes found. Try adjusting your filters.</p>
+                <i class="bi bi-book-half text-muted" style="font-size: 4rem;"></i>
+              </div>
+            <% } else { %>
+              <% notes.forEach(note => { %>
+                <div class="col-md-6 col-lg-4">
+                  <div class="card notes-card h-100">
+                    <div class="card-body">
+                      <!-- Title -->
+                      <h5 class="fw-bold mb-2">
+                        <a href="/notes/<%= note._id %>" class="text-decoration-none text-dark">
+                          <%= note.title %>
+                        </a>
+                      </h5>
+
+                      <!-- Description -->
+                      <p class="text-muted small text-truncate"><%= note.description %></p>
+
+                      <!-- Subject & Tags -->
+                      <div class="d-flex align-items-center mb-3">
+                        <span class="badge badge-info-custom me-2"><%= note.subject %></span>
+                        <% if (note.tags.length) { %>
+                          <% note.tags.forEach(tag => { %>
+                            <span class="badge bg-secondary me-1"><%= tag %></span>
+                          <% }) %>
+                        <% } %>
+                      </div>
+
+                      <!-- Uploaded By -->
+                      <div class="mb-3">
+                        <small class="d-block text-muted">
+                          <i class="bi bi-person me-1"></i>Uploaded by: <strong><%= note.uploadedBy ? note.uploadedBy.name : "Unknown" %></strong>
+                        </small>
+                        <small class="d-block text-muted">
+                          <i class="bi bi-calendar me-1"></i>Published: <%= new Date(note.createdAt).toLocaleDateString() %>
+                        </small>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="d-flex align-items-center gap-2 mt-auto">
+                        <a href="/notes/download/<%= note._id %>" class="btn btn-sm btn-success fw-bold">
+                          <i class="bi bi-download me-1"></i><%= note.downloads %>
+                        </a>
+                        <button 
+                          class="btn btn-sm <%= note.likes.some(like => like.user.toString() === (user ? user._id.toString() : "")) ? 'btn-danger' : 'btn-outline-danger' %> like-btn" 
+                          data-id="<%= note._id %>">
+                          <i class="bi bi-heart me-1"></i><span class="like-count"><%= note.likes.length %></span>
+                        </button>
+                        <a href="/notes/<%= note._id %>" class="btn btn-sm btn-outline-primary ms-auto">
+                          <i class="bi bi-eye me-1"></i>View
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            <% } %>
           </div>
-        <% }) %>
-      <% } %>
+        </div>
+      </main>
     </div>
   </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Like Toggle Script -->
   <script>
@@ -123,6 +199,5 @@
       });
     });
   </script>
-
 </body>
 </html>

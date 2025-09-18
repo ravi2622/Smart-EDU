@@ -1,131 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= quiz.title %> - Take Quiz</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background: #f8f9fa; }
-    .quiz-header {
-      background: #0d6efd;
-      color: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
-    .question-card {
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .timer {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #dc3545;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title><%= quiz.title %> | Smart EDU</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bs-primary: #0d6efd;
+            --bs-success: #198754;
+            --bs-danger: #dc3545;
+            --bs-light: #f8f9fa;
+            --bs-dark: #212529;
+            --bs-info: #0dcaf0;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bs-light);
+            color: var(--bs-dark);
+        }
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .quiz-info-card {
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--bs-primary), #0a58ca);
+            color: white;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+        }
+        .question-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background-color: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .question-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .form-check {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 0.5rem;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            cursor: pointer;
+        }
+        .form-check:hover {
+            background-color: #e9ecef;
+        }
+        .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0.25rem;
+            margin-left: -1.75rem;
+            cursor: pointer;
+        }
+        .form-check-label {
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+        }
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffc107;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+    </style>
 </head>
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="/dashboard">EduPlatform</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="/quiz">Quizzes</a></li>
-          <li class="nav-item"><a class="nav-link" href="/notes">Notes</a></li>
-          <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Quiz Info -->
-  <div class="container py-4">
-    <div class="quiz-header">
-      <h2 class="fw-bold"><%= quiz.title %></h2>
-      <p class="mb-1"><strong>Subject:</strong> <%= quiz.subject %></p>
-      <p class="mb-1"><strong>Difficulty:</strong> <%= quiz.difficulty %></p>
-      <p class="mb-1"><strong>Time Limit:</strong> <%= quiz.timeLimit %> minutes</p>
-      <p class="mb-0"><strong>Created By:</strong> <%= quiz.createdBy.name %></p>
-      <div class="mt-2">
-        <span class="timer" id="timer"></span>
-      </div>
-    </div>
-
-    <% if (existingAttempt) { %>
-      <div class="alert alert-info">
-        You have already attempted this quiz. Your previous score: <strong><%= existingAttempt.score %></strong>
-      </div>
-      <a href="/quiz/result/<%= quiz._id %>" class="btn btn-primary">View Result</a>
-    <% } else { %>
-      <form id="quizForm">
-        <% quiz.questions.forEach((q, qIndex) => { %>
-          <div class="card question-card mb-4 p-3">
-            <h5 class="fw-bold">Question <%= qIndex + 1 %>:</h5>
-            <p><%= q.question %></p>
-            <% q.options.forEach((option, oIndex) => { %>
-              <div class="form-check">
-                <input 
-                  class="form-check-input" 
-                  type="radio" 
-                  name="answers[<%= qIndex %>]" 
-                  value="<%= oIndex %>"
-                  id="q<%= qIndex %>o<%= oIndex %>">
-                <label class="form-check-label" for="q<%= qIndex %>o<%= oIndex %>">
-                  <%= option.text %>
-                </label>
-              </div>
-            <% }) %>
-          </div>
-        <% }) %>
-
-        <div class="d-flex justify-content-between">
-          <a href="/quiz" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-success">Submit Quiz</button>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-4" href="/dashboard">Smart EDU</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link fw-medium" href="/quiz">Quizzes</a></li>
+                    <li class="nav-item"><a class="nav-link fw-medium" href="/notes">Notes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+                </ul>
+            </div>
         </div>
-      </form>
-    <% } %>
-  </div>
+    </nav>
 
-  <!-- Bootstrap + jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="container py-5">
+        <div class="quiz-info-card p-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-9">
+                    <h2 class="fw-bold mb-1"><%= quiz.title %></h2>
+                    <p class="mb-1"><i class="bi bi-folder me-2"></i><strong>Subject:</strong> <%= quiz.subject %></p>
+                    <p class="mb-1"><i class="bi bi-shield-fill-check me-2"></i><strong>Difficulty:</strong> <%= quiz.difficulty %></p>
+                    <p class="mb-0"><i class="bi bi-person-fill me-2"></i><strong>Created By:</strong> <%= quiz.createdBy.name %></p>
+                </div>
+                <div class="col-md-3 text-md-end mt-3 mt-md-0">
+                    <div class="timer-display" id="timer">
+                        <i class="bi bi-clock-fill me-2"></i><%= quiz.timeLimit %>:00
+                    </div>
+                </div>
+            </div>
+        </div>
 
-  <script>
-    <% if (!existingAttempt) { %>
-    // Timer
-    let timeLeft = <%= quiz.timeLimit %> * 60; // seconds
-    const timerEl = document.getElementById("timer");
+        <% if (existingAttempt) { %>
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <h4 class="alert-heading fw-bold">Quiz Attempted!</h4>
+                <p>You have already completed this quiz. Your previous score was **<%= existingAttempt.score %> / <%= quiz.questions.length %>**.</p>
+                <hr>
+                <a href="/quiz/result/<%= quiz._id %>" class="btn btn-info fw-bold">View Your Result</a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } else { %>
+            <form id="quizForm">
+                <% quiz.questions.forEach((q, qIndex) => { %>
+                    <div class="card question-card mb-4 p-4">
+                        <h5 class="fw-bold mb-3">Question <%= qIndex + 1 %>:</h5>
+                        <p class="lead"><%= q.question %></p>
+                        <div class="options-group mt-3">
+                            <% q.options.forEach((option, oIndex) => { %>
+                                <div class="form-check">
+                                    <input 
+                                        class="form-check-input" 
+                                        type="radio" 
+                                        name="answers[<%= qIndex %>]" 
+                                        value="<%= oIndex %>"
+                                        id="q<%= qIndex %>o<%= oIndex %>"
+                                        required>
+                                    <label class="form-check-label" for="q<%= qIndex %>o<%= oIndex %>">
+                                        <%= option %>
+                                    </label>
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% }) %>
+                <div class="d-flex justify-content-between mt-5">
+                    <a href="/quiz" class="btn btn-secondary fw-bold px-4">Cancel</a>
+                    <button type="submit" class="btn btn-success fw-bold px-4">Submit Quiz</button>
+                </div>
+            </form>
+        <% } %>
+    </div>
 
-    function updateTimer() {
-      const minutes = Math.floor(timeLeft / 60);
-      const seconds = timeLeft % 60;
-      timerEl.textContent = `⏳ ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        alert("Time is up! Submitting quiz automatically.");
-        $("#quizForm").submit();
-      }
-      timeLeft--;
-    }
-    updateTimer();
-    const timerInterval = setInterval(updateTimer, 1000);
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
-    // Form submit with AJAX
-    $("#quizForm").submit(function (e) {
-      e.preventDefault();
-      if (!confirm("Are you sure you want to submit the quiz?")) return;
+    <script>
+        <% if (!existingAttempt) { %>
+            let timeLeft = <%= quiz.timeLimit %> * 60;
+            const timerEl = document.getElementById("timer");
 
-      $.post("/quiz/submit/<%= quiz._id %>", $(this).serialize(), function (data) {
-        if (data.success) {
-          window.location.href = data.redirect;
-        } else {
-          alert(data.error || "Error submitting quiz");
-        }
-      });
-    });
-    <% } %>
-  </script>
+            function updateTimer() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerEl.textContent = `⏳ ${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+                if (timeLeft <= 300 && timeLeft > 0) {
+                    timerEl.style.color = 'yellow';
+                }
+                if (timeLeft <= 60 && timeLeft > 0) {
+                    timerEl.style.color = 'red';
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Time is up! Submitting your quiz automatically.");
+                    $("#quizForm").submit();
+                }
+                timeLeft--;
+            }
+            updateTimer();
+            const timerInterval = setInterval(updateTimer, 1000);
+
+            $("#quizForm").submit(function (e) {
+                e.preventDefault();
+                if (!confirm("Are you sure you want to submit the quiz?")) return;
+
+                $.post("/quiz/submit/<%= quiz._id %>", $(this).serialize(), function (data) {
+                    if (data.success) {
+                        clearInterval(timerInterval);
+                        window.location.href = data.redirect;
+                    } else {
+                        alert(data.error || "Error submitting quiz");
+                    }
+                }).fail(function() {
+                    alert("Network error. Please try again.");
+                });
+            });
+        <% } %>
+    </script>
 </body>
 </html>
