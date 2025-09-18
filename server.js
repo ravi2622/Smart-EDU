@@ -162,6 +162,7 @@ app.use('/quiz', require('./routes/quiz'));
 app.use('/ai', require('./routes/ai'));
 app.use('/forum', require('./routes/forum'));
 app.use('/forgot-password', require('./routes/forgotPassword'));
+app.use('/progress', require('./routes/progress'));
 
 // Home page
 app.get('/', (req, res) => {
