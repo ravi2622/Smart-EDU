@@ -1,117 +1,504 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Progress Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
-    body { background: #f8f9fa; }
-    .card { margin-bottom: 20px; }
-    .progress-bar { font-weight: bold; }
+    /* small styling niceties */
+    .subject-card { min-height: 160px; }
+    .topic-badge { margin-right:6px; margin-bottom:6px; }
+    .small-muted { font-size:0.9rem; color:#6c757d; }
   </style>
 </head>
-<body>
-<div class="container mt-4">
-  <h1 class="mb-4">📊 Progress Dashboard</h1>
+<body class="bg-light">
 
-  <!-- Flash Messages -->
-  <% if(success_msg){ %>
-    <div class="alert alert-success"><%= success_msg %></div>
-  <% } %>
-  <% if(error_msg){ %>
-    <div class="alert alert-danger"><%= error_msg %></div>
-  <% } %>
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">Smart EDU</a>
+      <div class="d-flex align-items-center">
+        <span class="me-3">Signed in as <strong><%= user && user.name ? user.name : 'Guest' %></strong></span>
+        <a class="btn btn-outline-secondary btn-sm" href="/progress/studyplan">Study Plan</a>
+        <a class="btn btn-outline-success btn-sm ms-2" href="/progress/leaderboard">Leaderboard</a>
+      </div>
+    </div>
+  </nav>
 
-  <!-- Progress Overview -->
-  <div class="card">
-    <div class="card-header bg-primary text-white">Your Progress</div>
-    <div class="card-body">
-      <% if(progress.length > 0){ %>
-        <% progress.forEach(p => { %>
-          <div class="mb-3">
-            <strong><%= p.subject %></strong>
-            <div class="progress">
-              <div class="progress-bar bg-success" 
-                   role="progressbar" 
-                   style="width: <%= p.percentage %>%;">
-                <%= p.percentage %>%
+  <div class="container py-4">
+
+    <!-- Flash messages (works if you set with req.flash in server) -->
+    <div id="flash-area">
+      <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+        <% if (Array.isArray(success_msg)) { success_msg.forEach(m => { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= m %><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% }) } else { %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <%= success_msg %><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% } %>
+      <% } %>
+
+      <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+        <% if (Array.isArray(error_msg)) { error_msg.forEach(m => { %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <%= m %><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% }) } else { %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <%= error_msg %><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% } %>
+      <% } %>
+    </div>
+
+    <header class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h1 class="h3 mb-0">Progress Dashboard</h1>
+        <p class="small-muted mt-1">Track topics, quiz scores and your study plan at a glance.</p>
+      </div>
+
+      <div class="text-end">
+        <!-- Add Completed Topic button opens modal -->
+        <button id="openAddTopic" class="btn btn-primary">
+          <i class="bi bi-check2-all"></i> Add Completed Topic
+        </button>
+      </div>
+    </header>
+
+    <div class="row g-4">
+      <!-- LEFT: Progress & Quiz Scores -->
+      <div class="col-lg-8">
+
+        <!-- Overall summary -->
+        <div class="card mb-4 shadow-sm">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-1">Overall Progress</h5>
+              <% 
+                const safeProgress = Array.isArray(progress) ? progress : [];
+                let avgProgress = 0;
+                if (safeProgress.length) {
+                  const sum = safeProgress.reduce((s,p) => s + (p.percentage || 0), 0);
+                  avgProgress = Math.round(sum / safeProgress.length);
+                }
+              %>
+              <div class="d-flex align-items-center">
+                <div class="me-3" style="min-width:140px;">
+                  <div class="progress" style="height:18px;">
+                    <div class="progress-bar" role="progressbar" style="width:<%= avgProgress %>%">
+                      <%= avgProgress %>% 
+                    </div>
+                  </div>
+                </div>
+                <small class="text-muted"><%= safeProgress.length %> subjects tracked</small>
               </div>
             </div>
-            <small><%= p.topicsCompleted.length %> / <%= p.totalTopics || "?" %> topics</small>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <p>No progress data yet. Start learning to see updates!</p>
-      <% } %>
-    </div>
-  </div>
 
-  <!-- Study Plan Summary -->
-  <div class="card">
-    <div class="card-header bg-warning">Study Plan</div>
-    <div class="card-body">
-      <% if(studyPlan && studyPlan.plan && studyPlan.plan.length > 0){ %>
-        <p><strong>Exam Date:</strong> <%= studyPlan.examDate ? new Date(studyPlan.examDate).toDateString() : "Not set" %></p>
-        <ul class="list-group">
-          <% studyPlan.plan.slice(0,5).forEach(day => { %>
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <span>
-                <strong><%= new Date(day.date).toDateString() %>:</strong> 
-                <%= day.subject %> → <%= day.tasks.join(", ") %>
-              </span>
-              <% if(day.completed){ %>
-                <span class="badge bg-success">✔ Done</span>
+            <div class="text-end small-muted">
+              <div>Quizzes attempted: <strong><%= Array.isArray(quizScores) ? quizScores.length : 0 %></strong></div>
+              <% if (studyPlan && studyPlan.examDate) { %>
+                <div>Exam: <strong><%= new Date(studyPlan.examDate).toDateString() %></strong></div>
               <% } else { %>
-                <span class="badge bg-secondary">Pending</span>
+                <div>No exam date set</div>
               <% } %>
-            </li>
-          <% }) %>
-        </ul>
-        <a href="/progress/studyplan" class="btn btn-sm btn-outline-primary mt-2">View Full Study Plan</a>
-      <% } else { %>
-        <p>No study plan yet. <a href="/progress/studyplan">Generate one here</a>.</p>
-      <% } %>
-    </div>
-  </div>
+            </div>
+          </div>
+        </div>
 
-  <!-- Quiz Scores -->
-  <div class="card">
-    <div class="card-header bg-info text-white">Quiz Results</div>
-    <div class="card-body">
-      <% if(quizScores && quizScores.length > 0){ %>
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Quiz</th>
-              <th>Score</th>
-              <th>Percentage</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% quizScores.forEach(q => { %>
-              <tr>
-                <td><%= q.quizId ? q.quizId.title : "Deleted Quiz" %></td>
-                <td><%= q.score %> / <%= q.maxScore %></td>
-                <td><%= q.percentage %>%</td>
-                <td><%= new Date(q.completedAt).toLocaleDateString() %></td>
-              </tr>
+        <!-- Subject cards -->
+        <h5 class="mb-2">Subjects</h5>
+        <div id="subjectsContainer" class="row g-3 mb-4">
+          <% if (!safeProgress.length) { %>
+            <div class="col-12">
+              <div class="card p-4 text-center">
+                <p class="mb-0 text-muted">You haven't tracked any subjects yet. Use <strong>Add Completed Topic</strong> to start.</p>
+              </div>
+            </div>
+          <% } else { %>
+            <% safeProgress.forEach(p => { %>
+              <div class="col-md-6">
+                <div class="card subject-card shadow-sm" data-subject="<%- p.subject %>">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <h6 class="card-title mb-1"><%= p.subject %></h6>
+                        <small class="text-muted"><%= p.topicsCompleted && p.topicsCompleted.length ? p.topicsCompleted.length : 0 %> / <%= p.totalTopics || 0 %> topics</small>
+                      </div>
+                      <div class="text-end">
+                        <span class="badge bg-info"><%= p.percentage || 0 %>%</span>
+                      </div>
+                    </div>
+
+                    <div class="progress mb-2" style="height:14px;">
+                      <div class="progress-bar" role="progressbar" style="width:<%= p.percentage || 0 %>%"></div>
+                    </div>
+
+                    <div class="mb-2">
+                      <% if (p.topicsCompleted && p.topicsCompleted.length) { %>
+                        <% p.topicsCompleted.forEach(t => { %>
+                          <span class="badge bg-light border text-dark topic-badge"><i class="bi bi-check2 me-1"></i><%= t %></span>
+                        <% }) %>
+                      <% } else { %>
+                        <small class="text-muted">No topics completed yet</small>
+                      <% } %>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-outline-primary btn-add-topic" data-subject="<%- p.subject %>">
+                        <i class="bi bi-plus-lg"></i> Mark topic
+                      </button>
+                      <a href="/progress/studyplan" class="btn btn-sm btn-outline-secondary">View study plan</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
             <% }) %>
-          </tbody>
-        </table>
-      <% } else { %>
-        <p>No quiz attempts yet. Try a <a href="/quiz">quiz</a>!</p>
-      <% } %>
+          <% } %>
+        </div>
+
+        <!-- Quiz scores -->
+        <h5 class="mb-2">Quiz Scores</h5>
+        <div class="card mb-4 shadow-sm">
+          <div class="card-body">
+            <% const safeScores = Array.isArray(quizScores) ? quizScores : []; %>
+            <% if (!safeScores.length) { %>
+              <p class="text-muted mb-0">No quiz attempts yet.</p>
+            <% } else { %>
+              <ul class="list-group">
+                <% safeScores.forEach(sc => { %>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                      <% if (sc.quizId && sc.quizId.title) { %>
+                        <strong><%= sc.quizId.title %></strong>
+                      <% } else if (sc.quizId && sc.quizId.toString) { %>
+                        <!-- maybe an ObjectId or previous shape -->
+                        <em>Quiz (ID: <%= sc.quizId.toString() %>)</em>
+                      <% } else { %>
+                        <em>Deleted Quiz</em>
+                      <% } %>
+                      <% if (sc.attemptedAt) { %>
+                        <div class="small text-muted">attempted: <%= new Date(sc.attemptedAt).toLocaleString() %></div>
+                      <% } %>
+                    </div>
+                    <div><span class="badge bg-primary"><%= sc.score %></span></div>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </div>
+        </div>
+
+      </div> <!-- /LEFT -->
+
+      <!-- RIGHT: Quick actions & Study Plan preview -->
+      <div class="col-lg-4">
+
+        <div class="card mb-3 shadow-sm p-3">
+          <h6 class="mb-2">Quick Actions</h6>
+          <div class="d-grid gap-2">
+            <button id="btnOpenAdd" class="btn btn-primary">+ Add Completed Topic</button>
+            <a href="/progress/studyplan" class="btn btn-outline-primary">Open Study Plan</a>
+            <a href="/progress/leaderboard" class="btn btn-outline-success">View Leaderboard</a>
+          </div>
+        </div>
+
+        <div class="card mb-3 shadow-sm p-3">
+          <h6 class="mb-2">Upcoming Study Tasks</h6>
+          <% const planList = (studyPlan && Array.isArray(studyPlan.plan)) ? studyPlan.plan : []; %>
+          <% 
+            // compute next 5 upcoming (by date)
+            const upcoming = planList
+              .slice()
+              .sort((a,b) => new Date(a.date) - new Date(b.date))
+              .filter(d => new Date(d.date) >= new Date())
+              .slice(0,5);
+          %>
+          <% if (!upcoming.length) { %>
+            <p class="text-muted mb-0">No upcoming tasks. Generate a plan to see tasks here.</p>
+          <% } else { %>
+            <ul class="list-group list-group-flush">
+              <% upcoming.forEach(day => { %>
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div>
+                    <div><strong><%= new Date(day.date).toDateString() %></strong></div>
+                    <div class="small text-muted"><%= day.subject %> — <%= day.tasks && day.tasks[0] ? day.tasks[0] : 'Task' %></div>
+                  </div>
+                  <div class="text-end">
+                    <% if (day.completed) { %>
+                      <span class="badge bg-success">Done</span>
+                    <% } else { %>
+                      <button class="btn btn-sm btn-success mark-plan-task" 
+                              data-date="<%= new Date(day.date).toISOString().slice(0,10) %>"
+                              data-subject="<%= day.subject %>"
+                              data-task="<%= day.tasks && day.tasks[0] ? day.tasks[0] : '' %>">
+                        Mark
+                      </button>
+                    <% } %>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+            <div class="mt-2 text-end">
+              <a href="/progress/studyplan" class="btn btn-link btn-sm">Open full plan</a>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="card shadow-sm p-3">
+          <h6 class="mb-2">Account</h6>
+          <div class="small-muted">Email: <%= user && user.email ? user.email : 'N/A' %></div>
+          <div class="mt-2">
+            <a href="/users/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+          </div>
+        </div>
+
+      </div> <!-- /RIGHT -->
+    </div> <!-- /row -->
+
+  </div> <!-- /container -->
+
+  <!-- Add Completed Topic Modal (pure JS) -->
+  <div class="modal fade" id="addTopicModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="addTopicForm" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Completed Topic</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="subjectInput" class="form-label">Subject</label>
+            <input list="subjectsDatalist" id="subjectInput" name="subject" class="form-control" required placeholder="Choose or type subject">
+            <datalist id="subjectsDatalist">
+              <% safeProgress.forEach(p => { %>
+                <option value="<%= p.subject %>"></option>
+              <% }) %>
+            </datalist>
+            <div class="form-text">Type to pick an existing subject or add a new one.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="topicInput" class="form-label">Topic completed</label>
+            <input id="topicInput" name="topic" class="form-control" required placeholder="e.g. Integration rules">
+          </div>
+
+          <div class="mb-3">
+            <label for="totalTopicsInput" class="form-label">Total topics for subject (optional)</label>
+            <input id="totalTopicsInput" name="totalTopics" type="number" min="0" class="form-control" placeholder="If you want to set or update total topics count">
+          </div>
+
+          <div class="small text-muted">This will call <code>POST /progress/update</code> and update your dashboard immediately on success.</div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="submitAddTopic" type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- Links -->
-  <div class="d-flex justify-content-between mt-3">
-    <a href="/progress/leaderboard" class="btn btn-outline-dark">🏆 View Leaderboard</a>
-    <a href="/progress/studyplan" class="btn btn-outline-success">📅 Manage Study Plan</a>
-  </div>
-</div>
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Bootstrapped state from server for client updates
+    window.__progress = <%- JSON.stringify(safeProgress || []) %>;
+    window.__quizScores = <%- JSON.stringify(Array.isArray(quizScores) ? quizScores : []) %>;
+    window.__studyPlan = <%- JSON.stringify(studyPlan || {}) %>;
+
+    // Modal controls
+    const addTopicModalEl = document.getElementById('addTopicModal');
+    const bootstrapModal = new bootstrap.Modal(addTopicModalEl);
+
+    document.getElementById('openAddTopic').addEventListener('click', () => bootstrapModal.show());
+    document.getElementById('btnOpenAdd').addEventListener('click', () => bootstrapModal.show());
+
+    // Helpers
+    function showToast(message, type='success') {
+      const container = document.getElementById('flash-area');
+      const div = document.createElement('div');
+      div.className = `alert alert-${type} alert-dismissible fade show`;
+      div.role = 'alert';
+      div.innerHTML = `${message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+      container.prepend(div);
+      setTimeout(() => div.classList.remove('show'), 5000);
+    }
+
+    // POST /progress/update: Add completed topic
+    document.getElementById('addTopicForm').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const subject = document.getElementById('subjectInput').value.trim();
+      const topic = document.getElementById('topicInput').value.trim();
+      const totalTopicsVal = document.getElementById('totalTopicsInput').value;
+      const totalTopics = totalTopicsVal ? Number(totalTopicsVal) : undefined;
+
+      if (!subject || !topic) {
+        showToast('Subject and topic are required', 'danger');
+        return;
+      }
+
+      const submitBtn = document.getElementById('submitAddTopic');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+
+      try {
+        const res = await fetch('/progress/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subject, topic, totalTopics })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          const updated = data.progress; // subjectProgress returned from server
+          updateSubjectCardInDOM(updated);
+          showToast('Progress updated!');
+          bootstrapModal.hide();
+        } else {
+          showToast(data && data.error ? data.error : 'Failed to update', 'danger');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Network error while updating', 'danger');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save';
+      }
+    });
+
+    // When clicking the small "Mark topic" on a subject card -> prefill modal
+    document.querySelectorAll('.btn-add-topic').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const subject = btn.dataset.subject;
+        document.getElementById('subjectInput').value = subject || '';
+        document.getElementById('topicInput').focus();
+        bootstrapModal.show();
+      });
+    });
+
+    // Update or create subject card in DOM after API success
+    function updateSubjectCardInDOM(subjectProgress) {
+      if (!subjectProgress || !subjectProgress.subject) return;
+      const container = document.getElementById('subjectsContainer');
+      const subjectKey = subjectProgress.subject;
+      const existingCard = container.querySelector(`[data-subject="${CSS.escape(subjectKey)}"]`);
+
+      if (existingCard) {
+        // update numbers, progress bar and badges
+        const bar = existingCard.querySelector('.progress-bar');
+        if (bar) bar.style.width = (subjectProgress.percentage || 0) + '%';
+
+        // update badge percent
+        const badge = existingCard.querySelector('.badge.bg-info');
+        if (badge) badge.textContent = (subjectProgress.percentage || 0) + '%';
+
+        // update topic count small text
+        const smallText = existingCard.querySelector('.card-body small.text-muted');
+        if (smallText) smallText.textContent = `${(subjectProgress.topicsCompleted || []).length} / ${subjectProgress.totalTopics || 0} topics`;
+
+        // replace topic badges
+        const topicContainer = existingCard.querySelector('.card-body > div:nth-child(3)');
+        if (topicContainer) {
+          topicContainer.innerHTML = '';
+          (subjectProgress.topicsCompleted || []).forEach(t => {
+            const span = document.createElement('span');
+            span.className = 'badge bg-light border text-dark topic-badge';
+            span.innerHTML = `<i class="bi bi-check2 me-1"></i>${t}`;
+            topicContainer.appendChild(span);
+          });
+        }
+      } else {
+        // create a new card for new subject
+        const col = document.createElement('div');
+        col.className = 'col-md-6';
+        col.innerHTML = `
+          <div class="card subject-card shadow-sm" data-subject="${escapeHtml(subjectKey)}">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                  <h6 class="card-title mb-1">${escapeHtml(subjectKey)}</h6>
+                  <small class="text-muted">${(subjectProgress.topicsCompleted || []).length} / ${subjectProgress.totalTopics || 0} topics</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge bg-info">${subjectProgress.percentage || 0}%</span>
+                </div>
+              </div>
+              <div class="progress mb-2" style="height:14px;">
+                <div class="progress-bar" role="progressbar" style="width:${subjectProgress.percentage || 0}%"></div>
+              </div>
+              <div class="mb-2">
+                ${(subjectProgress.topicsCompleted || []).map(t => `<span class="badge bg-light border text-dark topic-badge"><i class="bi bi-check2 me-1"></i>${escapeHtml(t)}</span>`).join('')}
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary btn-add-topic" data-subject="${escapeHtml(subjectKey)}"><i class="bi bi-plus-lg"></i> Mark topic</button>
+                <a href="/progress/studyplan" class="btn btn-sm btn-outline-secondary">View study plan</a>
+              </div>
+            </div>
+          </div>
+        `;
+        container.prepend(col);
+
+        // wire the new "Mark topic" button
+        const newBtn = col.querySelector('.btn-add-topic');
+        if (newBtn) {
+          newBtn.addEventListener('click', () => {
+            document.getElementById('subjectInput').value = subjectKey;
+            document.getElementById('topicInput').focus();
+            bootstrapModal.show();
+          });
+        }
+      }
+    }
+
+    // Escape helper (minimal)
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    // Mark study plan task complete (POST)
+    document.querySelectorAll('.mark-plan-task').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const date = btn.dataset.date;
+        const subject = btn.dataset.subject;
+        const task = btn.dataset.task;
+
+        btn.disabled = true;
+        try {
+          const res = await fetch('/progress/studyplan/complete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, subject, task })
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            btn.closest('li').querySelector('div.text-end').innerHTML = '<span class="badge bg-success">Done</span>';
+            showToast('Marked task complete');
+          } else {
+            showToast(data && data.error ? data.error : 'Failed to mark', 'danger');
+            btn.disabled = false;
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Network error', 'danger');
+          btn.disabled = false;
+        }
+      });
+    });
+
+  </script>
 </body>
 </html>

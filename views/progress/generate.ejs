@@ -1,56 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generate Study Plan</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Generate Study Plan - Smart EDU</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+
   <style>
-    body {
-      padding: 2rem;
-      background-color: #f8f9fa;
+    .subject-pill {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f3f5;
+      border-radius: 20px;
+      padding: 0.4rem 0.8rem;
+      margin: 0.2rem;
     }
-    .form-container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 2rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    .subject-pill button {
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      margin-left: 0.4rem;
+      color: #dc3545;
+      cursor: pointer;
     }
   </style>
 </head>
-<body>
-  <div class="form-container">
-    <h2 class="mb-4">Generate Your Study Plan</h2>
+<body class="bg-light">
 
-    <% if (typeof success_msg !== 'undefined') { %>
-      <div class="alert alert-success"><%= success_msg %></div>
-    <% } %>
-    <% if (typeof error_msg !== 'undefined') { %>
-      <div class="alert alert-danger"><%= error_msg %></div>
-    <% } %>
-
-    <form action="/progress/studyplan/generate" method="POST">
-      <div class="mb-3">
-        <label for="examDate" class="form-label">Exam Date</label>
-        <input type="date" class="form-control" id="examDate" name="examDate" required>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">Smart EDU</a>
+      <div class="d-flex align-items-center">
+        <span class="me-3">Signed in as <strong><%= user && user.name ? user.name : 'Guest' %></strong></span>
+        <a class="btn btn-outline-primary btn-sm" href="/progress">Dashboard</a>
+        <a class="btn btn-outline-success btn-sm ms-2" href="/progress/studyplan">Study Plan</a>
       </div>
+    </div>
+  </nav>
 
-      <div class="mb-3">
-        <label for="subjects" class="form-label">Subjects (comma-separated)</label>
-        <input type="text" class="form-control" id="subjects" name="subjects" placeholder="Math, Physics, Chemistry" required>
+  <div class="container py-4">
+    <header class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h1 class="h3 mb-0">⚡ Generate Study Plan</h1>
+        <p class="small text-muted mt-1">Set your exam date, study hours, and subjects to create a personalized plan.</p>
       </div>
+      <a href="/progress/studyplan" class="btn btn-outline-primary"><i class="bi bi-arrow-left"></i> Back</a>
+    </header>
 
-      <div class="mb-3">
-        <label for="dailyHours" class="form-label">Daily Study Hours</label>
-        <input type="number" class="form-control" id="dailyHours" name="dailyHours" min="1" max="24" required>
+    <!-- Flash messages -->
+    <div id="flash-area">
+      <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <%= success_msg %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+      <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <%= error_msg %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Form -->
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form action="/progress/studyplan/generate" method="POST">
+          <div class="mb-3">
+            <label for="examDate" class="form-label">Exam Date</label>
+            <input type="date" class="form-control" name="examDate" id="examDate" required/>
+          </div>
+          <div class="mb-3">
+            <label for="dailyHours" class="form-label">Daily Study Hours</label>
+            <input type="number" class="form-control" name="dailyHours" id="dailyHours" min="1" required/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Subjects</label>
+            <div class="input-group mb-2">
+              <input type="text" id="subjectInput" class="form-control" placeholder="Enter subject name"/>
+              <button type="button" id="addSubject" class="btn btn-outline-secondary"><i class="bi bi-plus-circle"></i> Add</button>
+            </div>
+            <div id="subjectList" class="mb-2"></div>
+            <input type="hidden" name="subjects" id="subjectsField"/>
+          </div>
+          <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-lightning-charge-fill"></i> Generate</button>
+            <a href="/progress/studyplan" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
       </div>
-
-      <button type="submit" class="btn btn-primary w-100">Generate Plan</button>
-    </form>
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Scripts -->
+  <script>
+  const subjects = [];
+
+  document.querySelector("form").addEventListener("submit", (e) => {
+    if (subjects.length === 0) {
+      e.preventDefault();
+      alert("Please add at least one subject before generating a plan.");
+      return false;
+    }
+  });
+
+  document.getElementById("addSubject").addEventListener("click", () => {
+    const input = document.getElementById("subjectInput");
+    const value = input.value.trim();
+    if (value && !subjects.includes(value)) {
+      subjects.push(value);
+      updateSubjects();
+      input.value = "";
+    }
+  });
+
+  function removeSubject(sub) {
+    const idx = subjects.indexOf(sub);
+    if (idx > -1) {
+      subjects.splice(idx, 1);
+      updateSubjects();
+    }
+  }
+
+  function updateSubjects() {
+    const list = document.getElementById("subjectList");
+    const hidden = document.getElementById("subjectsField");
+    list.innerHTML = "";
+    subjects.forEach(sub => {
+      const pill = document.createElement("span");
+      pill.className = "subject-pill";
+      pill.innerHTML = sub + '<button type="button" onclick="removeSubject(\''+sub+'\')">&times;</button>';
+      list.appendChild(pill);
+    });
+    hidden.value = JSON.stringify(subjects);
+  }
+</script>
+
 </body>
 </html>

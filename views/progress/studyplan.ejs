@@ -1,87 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Study Plan</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Study Plan - Smart EDU</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"/>
+
   <style>
-    body { background: #f8f9fa; }
-    .card { margin-bottom: 15px; }
-    .completed { text-decoration: line-through; color: gray; }
+    .plan-day.completed {
+      background-color: #e9f9ee;
+      border-left: 5px solid #198754;
+    }
+    .plan-day.pending {
+      background-color: #fff;
+      border-left: 5px solid #ffc107;
+    }
+    .task-list { margin-bottom: 0; padding-left: 1.2rem; }
+    .task-list li { margin-bottom: 0.25rem; }
   </style>
 </head>
-<body>
-<div class="container mt-4">
-  <h1 class="text-center mb-4">📚 My Study Plan</h1>
+<body class="bg-light">
 
-  <% if(studyPlan && studyPlan.plan && studyPlan.plan.length > 0){ %>
-    <div class="mb-3 text-center">
-      <p><strong>Exam Date:</strong> <%= studyPlan.examDate.toDateString() %></p>
-      <p><strong>Daily Hours:</strong> <%= studyPlan.dailyHours %></p>
-    </div>
-
-    <% studyPlan.plan.forEach(day => { %>
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          <strong><%= new Date(day.date).toDateString() %></strong> — <%= day.subject %>
-        </div>
-        <div class="card-body">
-          <ul class="list-group">
-            <% day.tasks.forEach(task => { %>
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span class="<%= day.completed ? 'completed' : '' %>"><%= task %></span>
-                <% if(!day.completed){ %>
-                  <button 
-                    class="btn btn-sm btn-success mark-complete" 
-                    data-date="<%= day.date.toISOString().slice(0,10) %>" 
-                    data-subject="<%= day.subject %>" 
-                    data-task="<%= task %>">
-                    Mark Complete
-                  </button>
-                <% } else { %>
-                  ✅ Done
-                <% } %>
-              </li>
-            <% }) %>
-          </ul>
-        </div>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">Smart EDU</a>
+      <div class="d-flex align-items-center">
+        <span class="me-3">Signed in as <strong><%= user && user.name ? user.name : 'Guest' %></strong></span>
+        <a class="btn btn-outline-primary btn-sm" href="/progress">Dashboard</a>
+        <a class="btn btn-outline-success btn-sm ms-2" href="/progress/leaderboard">Leaderboard</a>
       </div>
-    <% }) %>
-
-  <% } else { %>
-    <div class="alert alert-info text-center">
-      <p>No study plan generated yet.</p>
-      <a href="/progress/generate" class="btn btn-primary">➕ Generate Study Plan</a>
     </div>
-  <% } %>
+  </nav>
 
-  <div class="text-center mt-3">
-    <a href="/progress" class="btn btn-outline-secondary">⬅ Back to Dashboard</a>
+  <div class="container py-4">
+    <header class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <h1 class="h3 mb-0">📅 Study Plan</h1>
+        <p class="small text-muted mt-1">Track your preparation progress until your exam.</p>
+      </div>
+      <div>
+        <a href="/progress/studyplan/generate" class="btn btn-warning"><i class="bi bi-lightning-charge"></i> Generate New Plan</a>
+        <a href="/progress" class="btn btn-outline-primary ms-2"><i class="bi bi-arrow-left"></i> Dashboard</a>
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    <div id="flash-area">
+      <% if (typeof success_msg !== 'undefined' && success_msg) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <%= success_msg %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+      <% if (typeof error_msg !== 'undefined' && error_msg) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <%= error_msg %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+    </div>
+
+    <% if (!studyPlan || !studyPlan.plan || studyPlan.plan.length === 0) { %>
+      <!-- No plan -->
+      <div class="alert alert-info">
+        You don’t have a study plan yet. Click below to generate one!
+      </div>
+      <a href="/progress/studyplan/generate" class="btn btn-primary">Generate Study Plan</a>
+    <% } else { %>
+      <!-- Plan details -->
+      <div class="mb-4">
+        <p><strong>Exam Date:</strong> <%= new Date(studyPlan.examDate).toDateString() %></p>
+        <p><strong>Daily Hours:</strong> <%= studyPlan.dailyHours %></p>
+        <p><strong>Subjects:</strong> <%= studyPlan.subjects && studyPlan.subjects.length ? studyPlan.subjects.join(", ") : "N/A" %></p>
+        <p class="text-muted"><small>Generated on <%= new Date(studyPlan.generated).toDateString() %></small></p>
+      </div>
+
+      <!-- Plan table -->
+      <div class="table-responsive">
+        <table class="table table-bordered bg-white shadow-sm">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Subject</th>
+              <th>Tasks</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% studyPlan.plan.forEach(day => { %>
+              <tr class="plan-day <%= day.completed ? 'completed' : 'pending' %>">
+                <td><%= new Date(day.date).toDateString() %></td>
+                <td><%= day.subject %></td>
+                <td>
+                  <ul class="task-list">
+                    <% day.tasks.forEach(t => { %>
+                      <li><%= t %></li>
+                    <% }) %>
+                  </ul>
+                </td>
+                <td>
+                  <% if (day.completed) { %>
+                    <span class="badge bg-success">Completed</span>
+                  <% } else { %>
+                    <button class="btn btn-sm btn-outline-success mark-complete"
+                      data-date="<%= new Date(day.date).toISOString().slice(0,10) %>"
+                      data-subject="<%= day.subject %>"
+                      data-task="<%= day.tasks[0] %>">
+                      <i class="bi bi-check2-circle"></i> Mark Complete
+                    </button>
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script>
-  document.querySelectorAll('.mark-complete').forEach(button => {
-    button.addEventListener('click', async () => {
-      const date = button.dataset.date;
-      const subject = button.dataset.subject;
-      const task = button.dataset.task;
-
-      try {
-        const res = await axios.post('/progress/studyplan/complete', { date, subject, task });
-        if(res.data.success){
-          button.closest('li').querySelector('span').classList.add('completed');
-          button.replaceWith('✅ Done');
+  <!-- jQuery for AJAX -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    $(document).on("click", ".mark-complete", function() {
+      const btn = $(this);
+      $.post("/progress/studyplan/complete", {
+        date: btn.data("date"),
+        subject: btn.data("subject"),
+        task: btn.data("task")
+      }).done(res => {
+        if (res.success) {
+          btn.closest("tr").removeClass("pending").addClass("completed");
+          btn.closest("td").html('<span class="badge bg-success">Completed</span>');
         } else {
-          alert('Failed to mark task as complete');
+          alert("Error: " + (res.error || "Failed to update"));
         }
-      } catch (err) {
-        console.error(err);
-        alert('Error marking task complete');
-      }
+      });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
