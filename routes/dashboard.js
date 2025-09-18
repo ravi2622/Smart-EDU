@@ -155,12 +155,21 @@ router.get('/', ensureAuthenticated, async (req, res) => {
       Question.find().populate('askedBy', 'name').sort({ createdAt: -1 }).limit(5)
     ]);
 
-    // Calculate overall progress
+    // Calculate overall progress safely
     let overallProgress = 0;
-    if (user.progress && user.progress.length > 0) {
-      const totalPercentage = user.progress.reduce((sum, prog) => sum + prog.percentage, 0);
-      overallProgress = Math.round(totalPercentage / user.progress.length);
+    if (Array.isArray(user.progress) && user.progress.length > 0) {
+      const validProgress = user.progress.filter(
+        (p) => typeof p.percentage === 'number' && !isNaN(p.percentage)
+      );
+
+      if (validProgress.length > 0) {
+        const totalPercentage = validProgress.reduce((sum, prog) => sum + prog.percentage, 0);
+        overallProgress = Math.round(totalPercentage / validProgress.length);
+      }
     }
+
+    // Ensure value is between 0–100
+    overallProgress = Math.max(0, Math.min(overallProgress, 100));
 
     res.render('dashboard', {
       user,
@@ -191,7 +200,7 @@ router.get('/profile', ensureAuthenticated, (req, res) => {
 router.post('/profile', ensureAuthenticated, async (req, res) => {
   try {
     const { name, grade, subjects, bio } = req.body;
-    const subjectsArray = subjects ? subjects.split(',').map(s => s.trim()) : [];
+    const subjectsArray = subjects ? subjects.split(',').map((s) => s.trim()) : [];
 
     await User.findByIdAndUpdate(req.user._id, {
       name,
@@ -220,7 +229,7 @@ router.post('/progress', ensureAuthenticated, async (req, res) => {
 
     if (!user) return res.json({ success: false, error: 'User not found' });
 
-    let subjectProgress = user.progress.find(p => p.subject === subject);
+    let subjectProgress = user.progress.find((p) => p.subject === subject);
 
     if (!subjectProgress) {
       subjectProgress = {
@@ -235,7 +244,7 @@ router.post('/progress', ensureAuthenticated, async (req, res) => {
     if (action === 'complete' && !subjectProgress.topicsCompleted.includes(topic)) {
       subjectProgress.topicsCompleted.push(topic);
     } else if (action === 'uncomplete') {
-      subjectProgress.topicsCompleted = subjectProgress.topicsCompleted.filter(t => t !== topic);
+      subjectProgress.topicsCompleted = subjectProgress.topicsCompleted.filter((t) => t !== topic);
     }
 
     subjectProgress.percentage = Math.round(
